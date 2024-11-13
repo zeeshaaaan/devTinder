@@ -3,9 +3,13 @@ const connectDB = require("./config/database")
 const app = express();
 const User = require("./models/user")
 const { ValidateSignUpData } = require("./utils/validation")
-const bcrypt = require("bcrypt")
-app.use(express.json())
+const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser")
+const jwt = require("jsonwebtoken");
+const { userAuth } = require("./middlewares/auth")
 
+app.use(express.json())
+app.use(cookieParser())
 
 app.post("/signup", async (req, res) => {
     try {
@@ -34,6 +38,10 @@ app.post("/login", async (req, res) => {
         }
         const isPasswordValid = await bcrypt.compare(password, user.password)
         if (isPasswordValid) {
+            const token = await jwt.sign({ _id: user._id }, "DEVTinder@$123", {
+                expiresIn: "1d"
+            })
+            res.cookie("token", token)
             res.send("Login success!!")
         }
         else {
@@ -44,6 +52,28 @@ app.post("/login", async (req, res) => {
         res.status(400).send("err:" + err.message)
     }
 })
+
+app.get("/profile", userAuth, async (req, res) => {
+    try {
+        const user = req.user;
+        res.send(user)
+    } catch (err) {
+        res.status(400).send("err:" + err.message)
+    }
+})
+
+
+app.post("/sendConnectionRequest", userAuth, async (req, res) => {
+    try {
+        const user = req.user;
+        res.send(user.firstName + " Send a connection req")
+    } catch (err) {
+        res.status(400).send("err:" + err.message)
+    }
+})
+
+
+
 
 app.get("/user", async (req, res) => {
     const userMail = req.body.emaiId
