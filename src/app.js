@@ -36,11 +36,13 @@ app.post("/login", async (req, res) => {
         if (!user) {
             throw new Error("Email id is not present");
         }
-        const isPasswordValid = await bcrypt.compare(password, user.password)
+        //const isPasswordValid = await bcrypt.compare(password, user.password) --> OR
+        const isPasswordValid = await user.validatePassword(password)
         if (isPasswordValid) {
-            const token = await jwt.sign({ _id: user._id }, "DEVTinder@$123", {
-                expiresIn: "1d"
-            })
+            // const token = await jwt.sign({ _id: user._id }, "DEVTinder@$123", {
+            //     expiresIn: "1d"
+            // }) ----> OR
+            const token = await user.getJWT()
             res.cookie("token", token)
             res.send("Login success!!")
         }
